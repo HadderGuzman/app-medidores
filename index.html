@@ -74,6 +74,12 @@
             font-size: 14px;
         }
 
+        .label-optional {
+            color: #999;
+            font-weight: 400;
+            font-size: 12px;
+        }
+
         input[type="text"],
         textarea {
             width: 100%;
@@ -356,7 +362,17 @@
             </div>
 
             <div class="form-group">
-                <label>Observación</label>
+                <label>Contrato <span class="label-optional">(opcional)</span></label>
+                <input type="text" id="contrato" placeholder="Ej: CT-2026-001" maxlength="100">
+            </div>
+
+            <div class="form-group">
+                <label>Dirección <span class="label-optional">(opcional)</span></label>
+                <input type="text" id="direccion" placeholder="Ej: Calle 5 #123-45" maxlength="150">
+            </div>
+
+            <div class="form-group">
+                <label>Observación <span class="label-optional">(opcional)</span></label>
                 <textarea id="observacion" placeholder="Ej: Medidor en buen estado"></textarea>
             </div>
         </div>
@@ -461,6 +477,8 @@
         function guardarRegistro() {
             const medidor = document.getElementById('medidor').value.trim();
             const local = document.getElementById('local').value.trim();
+            const contrato = document.getElementById('contrato').value.trim();
+            const direccion = document.getElementById('direccion').value.trim();
             const observacion = document.getElementById('observacion').value.trim();
 
             if (!medidor || !local) {
@@ -475,26 +493,47 @@
                 return;
             }
 
-            const registro = {
-                id: Date.now(),
-                fecha: new Date().toLocaleString('es-CO'),
-                medidor: medidor,
-                local: local,
-                observacion: observacion,
-                fotos: fotos.length,
-                fotosData: [...fotos]
-            };
+            // Buscar si el medidor ya existe
+            const registroExistente = registros.find(r => r.medidor === medidor);
 
-            registros.push(registro);
+            if (registroExistente) {
+                // Si existe, agregar fotos al registro anterior
+                registroExistente.fotosData.push(...fotos);
+                registroExistente.fotos = registroExistente.fotosData.length;
+                registroExistente.fecha = new Date().toLocaleString('es-CO');
+                if (contrato) registroExistente.contrato = contrato;
+                if (direccion) registroExistente.direccion = direccion;
+                if (observacion) registroExistente.observacion = observacion;
+                
+                mostrarMensaje(`✅ Fotos agregadas al medidor (${fotos.length} foto${fotos.length !== 1 ? 's' : ''})`, 'success');
+            } else {
+                // Si no existe, crear nuevo registro
+                const registro = {
+                    id: Date.now(),
+                    fecha: new Date().toLocaleString('es-CO'),
+                    medidor: medidor,
+                    local: local,
+                    contrato: contrato,
+                    direccion: direccion,
+                    observacion: observacion,
+                    fotos: fotos.length,
+                    fotosData: [...fotos]
+                };
+
+                registros.push(registro);
+                mostrarMensaje(`✅ Registro guardado (${fotos.length} foto${fotos.length !== 1 ? 's' : ''})`, 'success');
+            }
+
             guardarDatos();
 
             // Limpiar formulario
             document.getElementById('medidor').value = '';
             document.getElementById('local').value = '';
+            document.getElementById('contrato').value = '';
+            document.getElementById('direccion').value = '';
             document.getElementById('observacion').value = '';
             limpiarFotos();
 
-            mostrarMensaje(`✅ Registro guardado (${fotos.length} foto${fotos.length !== 1 ? 's' : ''})`, 'success');
             actualizarTabla();
         }
 
@@ -526,9 +565,9 @@
             `;
 
             registros.forEach(reg => {
-                let accionBotones = `<button class="btn-delete" onclick="eliminarRegistro(${reg.id})">❌</button>`;
+                let accionBotones = `<button class="btn-delete" onclick="eliminarRegistro('${reg.medidor}')">❌</button>`;
                 if (reg.fotos > 0) {
-                    accionBotones += `<button class="btn-download-photos" onclick="descargarFotos(${reg.id})">📥</button>`;
+                    accionBotones += `<button class="btn-download-photos" onclick="descargarFotos('${reg.medidor}')">📥</button>`;
                 }
                 
                 html += `
@@ -553,15 +592,15 @@
             btnClearAll.style.display = 'block';
         }
 
-        function eliminarRegistro(id) {
-            registros = registros.filter(r => r.id !== id);
+        function eliminarRegistro(medidor) {
+            registros = registros.filter(r => r.medidor !== medidor);
             guardarDatos();
             actualizarTabla();
             mostrarMensaje('Registro eliminado', 'success');
         }
 
-        async function descargarFotos(id) {
-            const registro = registros.find(r => r.id === id);
+        async function descargarFotos(medidor) {
+            const registro = registros.find(r => r.medidor === medidor);
             if (!registro || registro.fotosData.length === 0) {
                 mostrarMensaje('No hay fotos para descargar', 'error');
                 return;
@@ -577,7 +616,6 @@
 
                 registro.fotosData.forEach((foto, index) => {
                     const base64Data = foto.data.split(',')[1];
-                    // Nombre: 2026-10-12_12345_1.jpg (fecha_medidor_numero)
                     const nombreFoto = `${fechaCorta}_${registro.medidor}_${index + 1}.jpg`;
                     carpeta.file(nombreFoto, base64Data, {base64: true});
                 });
@@ -614,10 +652,12 @@
                 return;
             }
 
-            let csv = 'Fecha,Medidor,Local,Observación,Fotos\n';
+            let csv = 'Fecha,Medidor,Local,Contrato,Dirección,Observación,Fotos\n';
             registros.forEach(reg => {
-                const obs = reg.observacion.replace(/"/g, '""');
-                csv += `"${reg.fecha}","${reg.medidor}","${reg.local}","${obs}",${reg.fotos}\n`;
+                const obs = (reg.observacion || '').replace(/"/g, '""');
+                const cont = (reg.contrato || '').replace(/"/g, '""');
+                const dir = (reg.direccion || '').replace(/"/g, '""');
+                csv += `"${reg.fecha}","${reg.medidor}","${reg.local}","${cont}","${dir}","${obs}",${reg.fotos}\n`;
             });
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
