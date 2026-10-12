@@ -388,6 +388,7 @@
     <script>
         let registros = [];
         let fotos = [];
+        let fotosEnCarga = 0;
 
         // Cargar datos del localStorage
         function cargarDatos() {
@@ -407,6 +408,12 @@
         document.getElementById('cameraInput').addEventListener('change', function(e) {
             const files = Array.from(e.target.files);
             fotos = [];
+            fotosEnCarga = files.length;
+
+            if (files.length === 0) {
+                fotosEnCarga = 0;
+                return;
+            }
 
             files.forEach(file => {
                 const reader = new FileReader();
@@ -415,6 +422,7 @@
                         data: event.target.result,
                         timestamp: new Date().toLocaleString('es-CO')
                     });
+                    fotosEnCarga--;
                     mostrarFotos();
                 };
                 reader.readAsDataURL(file);
@@ -443,6 +451,7 @@
 
         function limpiarFotos() {
             fotos = [];
+            fotosEnCarga = 0;
             document.getElementById('cameraInput').value = '';
             mostrarFotos();
             mostrarMensaje('Fotos eliminadas', 'success');
@@ -456,6 +465,13 @@
 
             if (!medidor || !local) {
                 mostrarMensaje('Completa Medidor y Local', 'error');
+                return;
+            }
+
+            // Si hay fotos en carga, esperar a que terminen
+            if (fotosEnCarga > 0) {
+                mostrarMensaje('Esperando que carguen las fotos...', 'error');
+                setTimeout(() => guardarRegistro(), 500);
                 return;
             }
 
