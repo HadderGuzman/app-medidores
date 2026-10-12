@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 App Medidores - Campo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .form-section h2 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-section h2 span {
+            margin-right: 8px;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .camera-section {
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #f8f9ff;
+            color: #667eea;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+            display: none;
+        }
+
+        .photo-preview {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+        }
+
+        .photo-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-count {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            grid-column: 1;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-save:active {
+            transform: translateY(0);
+        }
+
+        .btn-clear-photos {
+            background: #ffa726;
+            color: white;
+        }
+
+        .btn-clear-photos:hover {
+            background: #fb8c00;
+            transform: translateY(-2px);
+        }
+
+        .btn-delete {
+            background: #ef5350;
+            color: white;
+            padding: 8px;
+        }
+
+        .btn-delete:hover {
+            background: #e53935;
+        }
+
+        .table-section {
+            margin-top: 30px;
+            border-top: 2px solid #e0e0e0;
+            padding-top: 20px;
+        }
+
+        .table-section h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: #f5f5f5;
+        }
+
+        th {
+            padding: 10px 8px;
+            text-align: left;
+            color: #555;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #666;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .btn-download {
+            background: #26a69a;
+            color: white;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .btn-download:hover {
+            background: #009688;
+            transform: translateY(-2px);
+        }
+
+        .btn-clear-all {
+            background: #78909c;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-clear-all:hover {
+            background: #607d8b;
+            transform: translateY(-2px);
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 30px 20px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .success-message {
+            background: #4caf50;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+            text-align: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .error-message {
+            background: #f44336;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+            text-align: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            .buttons {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 App Medidores</h1>
+            <p>Registra medidores en campo</p>
+        </div>
+
+        <div class="success-message" id="successMsg"></div>
+        <div class="error-message" id="errorMsg"></div>
+
+        <!-- FORMULARIO -->
+        <div class="form-section">
+            <h2><span>📝</span> Registrar Medidor</h2>
+
+            <div class="form-group">
+                <label>Número de Medidor *</label>
+                <input type="text" id="medidor" placeholder="Ej: 12345" maxlength="50">
+            </div>
+
+            <div class="form-group">
+                <label>Nombre del Local *</label>
+                <input type="text" id="local" placeholder="Ej: Casa García" maxlength="100">
+            </div>
+
+            <div class="form-group">
+                <label>Observación</label>
+                <textarea id="observacion" placeholder="Ej: Medidor en buen estado"></textarea>
+            </div>
+        </div>
+
+        <!-- CÁMARA -->
+        <div class="form-section camera-section">
+            <h2><span>📷</span> Tomar Fotos</h2>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" multiple>
+            <div class="photo-preview" id="photoPreview"></div>
+            <div id="photoCount" class="photo-count" style="display: none;">0 fotos</div>
+        </div>
+
+        <!-- BOTONES -->
+        <div class="buttons">
+            <button class="btn-save" onclick="guardarRegistro()">✅ Guardar Registro</button>
+            <button class="btn-clear-photos" onclick="limpiarFotos()">🗑️ Limpiar</button>
+        </div>
+
+        <!-- TABLA -->
+        <div class="table-section">
+            <h2>📊 Registros Digitados</h2>
+            <div id="tableContainer"></div>
+            <button class="btn-download" onclick="descargarCSV()" style="display: none;" id="btnDownload">⬇️ Descargar CSV</button>
+            <button class="btn-clear-all" onclick="limpiarTodos()" style="display: none;" id="btnClearAll">🔄 Limpiar Todos</button>
+        </div>
+    </div>
+
+    <script>
+        let registros = [];
+        let fotos = [];
+
+        // Cargar datos del localStorage
+        function cargarDatos() {
+            try {
+                const datosGuardados = localStorage.getItem('medidoresData');
+                if (datosGuardados) {
+                    registros = JSON.parse(datosGuardados);
+                    actualizarTabla();
+                }
+            } catch (e) {
+                console.error('Error cargando datos:', e);
+            }
+        }
+
+        // Guardar datos en localStorage
+        function guardarDatos() {
+            try {
+                localStorage.setItem('medidoresData', JSON.stringify(registros));
+            } catch (e) {
+                console.error('Error guardando datos:', e);
+                mostrarMensaje('Error al guardar (espacio lleno)', 'error');
+            }
+        }
+
+        // Manejar fotos
+        document.getElementById('cameraInput').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            fotos = [];
+            let archivosLeidos = 0;
+
+            if (files.length === 0) return;
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    fotos.push({
+                        data: event.target.result,
+                        timestamp: new Date().toLocaleString('es-CO')
+                    });
+                    archivosLeidos++;
+
+                    if (archivosLeidos === files.length) {
+                        mostrarFotos();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        function mostrarFotos() {
+            const preview = document.getElementById('photoPreview');
+            const photoCount = document.getElementById('photoCount');
+
+            preview.innerHTML = '';
+            fotos.forEach((foto, index) => {
+                const div = document.createElement('div');
+                div.className = 'photo-item';
+                div.innerHTML = `<img src="${foto.data}" alt="Foto ${index + 1}">`;
+                preview.appendChild(div);
+            });
+
+            if (fotos.length > 0) {
+                photoCount.textContent = `${fotos.length} foto${fotos.length !== 1 ? 's' : ''}`;
+                photoCount.style.display = 'inline-block';
+            } else {
+                photoCount.style.display = 'none';
+            }
+        }
+
+        function limpiarFotos() {
+            fotos = [];
+            document.getElementById('cameraInput').value = '';
+            mostrarFotos();
+            mostrarMensaje('Fotos eliminadas', 'success');
+        }
+
+        // Guardar registro
+        function guardarRegistro() {
+            const medidor = document.getElementById('medidor').value.trim();
+            const local = document.getElementById('local').value.trim();
+            const observacion = document.getElementById('observacion').value.trim();
+
+            if (!medidor || !local) {
+                mostrarMensaje('⚠️ Completa Medidor y Local', 'error');
+                return;
+            }
+
+            const registro = {
+                id: Date.now(),
+                fecha: new Date().toLocaleString('es-CO'),
+                medidor: medidor,
+                local: local,
+                observacion: observacion,
+                fotos: fotos.length
+            };
+
+            registros.push(registro);
+            guardarDatos();
+
+            // Limpiar formulario
+            document.getElementById('medidor').value = '';
+            document.getElementById('local').value = '';
+            document.getElementById('observacion').value = '';
+
+            const numFotos = fotos.length;
+            limpiarFotos();
+
+            mostrarMensaje(`✅ Registro guardado (${numFotos} foto${numFotos !== 1 ? 's' : ''})`, 'success');
+            actualizarTabla();
+        }
+
+        function actualizarTabla() {
+            const container = document.getElementById('tableContainer');
+            const btnDownload = document.getElementById('btnDownload');
+            const btnClearAll = document.getElementById('btnClearAll');
+
+            if (registros.length === 0) {
+                container.innerHTML = '<div class="empty-message">📭 No hay registros aún. ¡Empieza a digitar!</div>';
+                btnDownload.style.display = 'none';
+                btnClearAll.style.display = 'none';
+                return;
+            }
+
+            let html = `
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Medidor</th>
+                                <th>Local</th>
+                                <th>Fotos</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            registros.forEach(reg => {
+                html += `
+                    <tr>
+                        <td>${reg.fecha}</td>
+                        <td>${reg.medidor}</td>
+                        <td>${reg.local}</td>
+                        <td>${reg.fotos}</td>
+                        <td><button class="btn-delete" onclick="eliminarRegistro(${reg.id})">❌</button></td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = html;
+            btnDownload.style.display = 'block';
+            btnClearAll.style.display = 'block';
+        }
+
+        function eliminarRegistro(id) {
+            registros = registros.filter(r => r.id !== id);
+            guardarDatos();
+            actualizarTabla();
+            mostrarMensaje('Registro eliminado', 'success');
+        }
+
+        function limpiarTodos() {
+            if (confirm('¿Seguro que quieres eliminar TODOS los registros?')) {
+                registros = [];
+                guardarDatos();
+                actualizarTabla();
+                mostrarMensaje('Todos los registros fueron eliminados', 'success');
+            }
+        }
+
+        function descargarCSV() {
+            if (registros.length === 0) {
+                mostrarMensaje('No hay registros para descargar', 'error');
+                return;
+            }
+
+            let csv = 'Fecha,Medidor,Local,Observación,Fotos\n';
+            registros.forEach(reg => {
+                const obs = (reg.observacion || '').replace(/"/g, '""');
+                csv += `"${reg.fecha}","${reg.medidor}","${reg.local}","${obs}",${reg.fotos}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            const fecha = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            const hora = new Date().toTimeString().slice(0, 5).replace(/:/g, '');
+
+            link.setAttribute('href', url);
+            link.setAttribute('download', `medidores_${fecha}_${hora}.csv`);
+            link.style.visibility = 'hidden';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(url);
+
+            mostrarMensaje('✅ CSV descargado', 'success');
+        }
+
+        function mostrarMensaje(texto, tipo) {
+            const msg = document.getElementById(tipo + 'Msg');
+            msg.textContent = texto;
+            msg.style.display = 'block';
+
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 3000);
+        }
+
+        // Cargar datos al iniciar
+        cargarDatos();
+    </script>
+</body>
+</html>
