@@ -499,6 +499,7 @@
                     <table>
                         <thead>
                             <tr>
+                                <th>Fecha</th>
                                 <th>Medidor</th>
                                 <th>Local</th>
                                 <th>Fotos</th>
@@ -516,6 +517,7 @@
                 
                 html += `
                     <tr>
+                        <td>${reg.fecha}</td>
                         <td>${reg.medidor}</td>
                         <td>${reg.local}</td>
                         <td>${reg.fotos}</td>
@@ -553,22 +555,28 @@
                 const zip = new JSZip();
                 const carpeta = zip.folder(`Medidor_${registro.medidor}`);
 
+                // Convertir fecha a formato corto
+                const fechaObj = new Date(registro.id);
+                const fechaCorta = fechaObj.toISOString().slice(0, 10);
+
                 registro.fotosData.forEach((foto, index) => {
                     const base64Data = foto.data.split(',')[1];
-                    carpeta.file(`foto_${index + 1}.jpg`, base64Data, {base64: true});
+                    // Nombre: 2026-10-12_12345_1.jpg (fecha_medidor_numero)
+                    const nombreFoto = `${fechaCorta}_${registro.medidor}_${index + 1}.jpg`;
+                    carpeta.file(nombreFoto, base64Data, {base64: true});
                 });
 
                 const blob = await zip.generateAsync({type: 'blob'});
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `Medidor_${registro.medidor}.zip`;
+                link.download = `Medidor_${registro.medidor}_${fechaCorta}.zip`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
 
-                mostrarMensaje(`✅ ZIP descargado: Medidor_${registro.medidor}.zip`, 'success');
+                mostrarMensaje(`✅ ZIP descargado: Medidor_${registro.medidor}_${fechaCorta}.zip`, 'success');
             } catch (error) {
                 mostrarMensaje('Error al descargar fotos', 'error');
                 console.error(error);
@@ -590,10 +598,10 @@
                 return;
             }
 
-            let csv = 'Medidor,Local,Observación,Fotos\n';
+            let csv = 'Fecha,Medidor,Local,Observación,Fotos\n';
             registros.forEach(reg => {
                 const obs = reg.observacion.replace(/"/g, '""');
-                csv += `"${reg.medidor}","${reg.local}","${obs}",${reg.fotos}\n`;
+                csv += `"${reg.fecha}","${reg.medidor}","${reg.local}","${obs}",${reg.fotos}\n`;
             });
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
