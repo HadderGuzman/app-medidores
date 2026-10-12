@@ -153,7 +153,7 @@
 
         .buttons {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 2fr 1fr 1fr;
             gap: 10px;
             margin-bottom: 25px;
         }
@@ -201,6 +201,17 @@
 
         .btn-delete:hover {
             background: #e53935;
+        }
+
+        .btn-download-photos {
+            background: #29b6f6;
+            color: white;
+            padding: 8px;
+            margin-left: 5px;
+        }
+
+        .btn-download-photos:hover {
+            background: #0288d1;
         }
 
         .table-section {
@@ -285,7 +296,6 @@
             margin-bottom: 15px;
             display: none;
             text-align: center;
-            animation: slideIn 0.3s ease-out;
         }
 
         .error-message {
@@ -296,18 +306,6 @@
             margin-bottom: 15px;
             display: none;
             text-align: center;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         @media (max-width: 480px) {
@@ -317,6 +315,10 @@
 
             .buttons {
                 grid-template-columns: 1fr;
+            }
+
+            .btn-save {
+                grid-column: 1;
             }
 
             table {
@@ -370,7 +372,7 @@
         <!-- BOTONES -->
         <div class="buttons">
             <button class="btn-save" onclick="guardarRegistro()">✅ Guardar Registro</button>
-            <button class="btn-clear-photos" onclick="limpiarFotos()">🗑️ Limpiar</button>
+            <button class="btn-clear-photos" onclick="limpiarFotos()">🗑️ Limpiar Fotos</button>
         </div>
 
         <!-- TABLA -->
@@ -382,40 +384,29 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
         let registros = [];
         let fotos = [];
 
         // Cargar datos del localStorage
         function cargarDatos() {
-            try {
-                const datosGuardados = localStorage.getItem('medidoresData');
-                if (datosGuardados) {
-                    registros = JSON.parse(datosGuardados);
-                    actualizarTabla();
-                }
-            } catch (e) {
-                console.error('Error cargando datos:', e);
+            const datosGuardados = localStorage.getItem('medidoresData');
+            if (datosGuardados) {
+                registros = JSON.parse(datosGuardados);
+                actualizarTabla();
             }
         }
 
         // Guardar datos en localStorage
         function guardarDatos() {
-            try {
-                localStorage.setItem('medidoresData', JSON.stringify(registros));
-            } catch (e) {
-                console.error('Error guardando datos:', e);
-                mostrarMensaje('Error al guardar (espacio lleno)', 'error');
-            }
+            localStorage.setItem('medidoresData', JSON.stringify(registros));
         }
 
         // Manejar fotos
         document.getElementById('cameraInput').addEventListener('change', function(e) {
             const files = Array.from(e.target.files);
             fotos = [];
-            let archivosLeidos = 0;
-
-            if (files.length === 0) return;
 
             files.forEach(file => {
                 const reader = new FileReader();
@@ -424,11 +415,7 @@
                         data: event.target.result,
                         timestamp: new Date().toLocaleString('es-CO')
                     });
-                    archivosLeidos++;
-
-                    if (archivosLeidos === files.length) {
-                        mostrarFotos();
-                    }
+                    mostrarFotos();
                 };
                 reader.readAsDataURL(file);
             });
@@ -468,7 +455,7 @@
             const observacion = document.getElementById('observacion').value.trim();
 
             if (!medidor || !local) {
-                mostrarMensaje('⚠️ Completa Medidor y Local', 'error');
+                mostrarMensaje('Completa Medidor y Local', 'error');
                 return;
             }
 
@@ -478,7 +465,8 @@
                 medidor: medidor,
                 local: local,
                 observacion: observacion,
-                fotos: fotos.length
+                fotos: fotos.length,
+                fotosData: [...fotos]
             };
 
             registros.push(registro);
@@ -488,11 +476,9 @@
             document.getElementById('medidor').value = '';
             document.getElementById('local').value = '';
             document.getElementById('observacion').value = '';
-
-            const numFotos = fotos.length;
             limpiarFotos();
 
-            mostrarMensaje(`✅ Registro guardado (${numFotos} foto${numFotos !== 1 ? 's' : ''})`, 'success');
+            mostrarMensaje(`✅ Registro guardado (${fotos.length} foto${fotos.length !== 1 ? 's' : ''})`, 'success');
             actualizarTabla();
         }
 
@@ -513,7 +499,6 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Fecha</th>
                                 <th>Medidor</th>
                                 <th>Local</th>
                                 <th>Fotos</th>
@@ -524,13 +509,17 @@
             `;
 
             registros.forEach(reg => {
+                let accionBotones = `<button class="btn-delete" onclick="eliminarRegistro(${reg.id})">❌</button>`;
+                if (reg.fotos > 0) {
+                    accionBotones += `<button class="btn-download-photos" onclick="descargarFotos(${reg.id})">📥</button>`;
+                }
+                
                 html += `
                     <tr>
-                        <td>${reg.fecha}</td>
                         <td>${reg.medidor}</td>
                         <td>${reg.local}</td>
                         <td>${reg.fotos}</td>
-                        <td><button class="btn-delete" onclick="eliminarRegistro(${reg.id})">❌</button></td>
+                        <td>${accionBotones}</td>
                     </tr>
                 `;
             });
@@ -553,6 +542,39 @@
             mostrarMensaje('Registro eliminado', 'success');
         }
 
+        async function descargarFotos(id) {
+            const registro = registros.find(r => r.id === id);
+            if (!registro || registro.fotosData.length === 0) {
+                mostrarMensaje('No hay fotos para descargar', 'error');
+                return;
+            }
+
+            try {
+                const zip = new JSZip();
+                const carpeta = zip.folder(`Medidor_${registro.medidor}`);
+
+                registro.fotosData.forEach((foto, index) => {
+                    const base64Data = foto.data.split(',')[1];
+                    carpeta.file(`foto_${index + 1}.jpg`, base64Data, {base64: true});
+                });
+
+                const blob = await zip.generateAsync({type: 'blob'});
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Medidor_${registro.medidor}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                mostrarMensaje(`✅ ZIP descargado: Medidor_${registro.medidor}.zip`, 'success');
+            } catch (error) {
+                mostrarMensaje('Error al descargar fotos', 'error');
+                console.error(error);
+            }
+        }
+
         function limpiarTodos() {
             if (confirm('¿Seguro que quieres eliminar TODOS los registros?')) {
                 registros = [];
@@ -568,29 +590,26 @@
                 return;
             }
 
-            let csv = 'Fecha,Medidor,Local,Observación,Fotos\n';
+            let csv = 'Medidor,Local,Observación,Fotos\n';
             registros.forEach(reg => {
-                const obs = (reg.observacion || '').replace(/"/g, '""');
-                csv += `"${reg.fecha}","${reg.medidor}","${reg.local}","${obs}",${reg.fotos}\n`;
+                const obs = reg.observacion.replace(/"/g, '""');
+                csv += `"${reg.medidor}","${reg.local}","${obs}",${reg.fotos}\n`;
             });
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             const fecha = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            const hora = new Date().toTimeString().slice(0, 5).replace(/:/g, '');
 
             link.setAttribute('href', url);
-            link.setAttribute('download', `medidores_${fecha}_${hora}.csv`);
+            link.setAttribute('download', `medidores_${fecha}.csv`);
             link.style.visibility = 'hidden';
 
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-            URL.revokeObjectURL(url);
-
-            mostrarMensaje('✅ CSV descargado', 'success');
+            mostrarMensaje('CSV descargado', 'success');
         }
 
         function mostrarMensaje(texto, tipo) {
